@@ -1,0 +1,162 @@
+PASS package is standalone (imports with no other project module on the path)
+PASS empty scene -> clear error
+PASS no mirror-target presets any more
+PASS reflection_matrix = p - 2((p-o).n)n and is an involution
+PASS paired_names
+PASS three cases found, ids from set names / label prefixes   [['PRE', 'POST', 'FU']]
+PASS label prefix stripped, placeholder ignored
+PASS scripted dialog run (keep Right) completed with no harness errors   [ | steps left 0]
+PASS side question offers Right, Left, Cancel   [['Right', 'Left', 'Cancel']]
+PASS source question lists the model and the segmentation   [['Cube   (model)', 'BoxSeg   (segmentation)']]
+PASS plane picker offers the PRE landmarks only (no mirrored ones)   [['CG', 'Se', 'Ba', 'ANS', 'RZf', 'LZf', 'RD', 'LD', 'RsOr', 'LsOr', 'RlOr', 'LlOr', 'RiOr', 'LiOr', 'RIn', 'LIn', 'ROc6', 'LOc6', 'ROc3', 'LOc3', 'N', 'MidOc', 'RM', 'LM', 'RMC', 'RLC', 'LMC', 'LLC']]
+PASS first question: define new landmarks or use those already set   [['Define new landmarks', 'Use landmarks already set', 'Cancel']]
+PASS PRE_align made from the existing PRE set: CG, Se, Ba, ANS, RM, LM in that order, same world positions
+PASS POST_align made from the existing POST set: CG, Se, Ba, ANS, RM, LM in that order, same world positions
+PASS InitialAlign made (a linear transform) and returned by run()
+PASS wizard settings: From POST_align, To PRE_align, output InitialAlign, Rigid, Manual point matching, Manual update   [Rigid, Manual, Manual]
+PASS InitialAlign = independent least-squares rigid fit of POST_align (world) onto PRE_align (world)   [max diff 2.34e-07]
+PASS its recorded RMS error = the RMS of the residuals (POST LM sits away from PRE LM in this scene)   [0.5165 vs 0.5165]
+PASS PRE_align and POST_align have no parent transform (PRE_Landmarks does)
+PASS InitialAlign is not applied: no node is under it
+PASS no FU_align (only PRE and POST); the _align lists are not cases
+PASS CSV dialog default name   [symmetrized_measurements.csv]
+PASS run returned side R and the four planes   [['Occlusal', 'Paracoronal', 'Sagittal', 'Tri']]
+PASS Sagittal plane = canonical x=0 in the world (normal parallel to R e_x, origin on it)
+PASS Sagittal is recorded as made perpendicular to Occlusal from CG, Se, Ba, ANS
+PASS mirPRE_Landmarks = the PRE right landmarks copied + their mirrors labeled L (full R and L set); no PRE L, N, MidOc, CG/Se/Ba/ANS   [['RZf', 'LZf', 'RD', 'LD', 'RsOr', 'LsOr', 'RlOr', 'LlOr', 'RiOr', 'LiOr', 'RIn', 'LIn', 'ROc6', 'LOc6', 'ROc3', 'LOc3', 'RM', 'LM', 'RMC', 'LMC', 'RLC', 'LLC']]
+PASS R points = the PRE R landmarks, L points = their mirror in the canonical frame (PRE set was under a transform)   [max err 1.74e-14]
+PASS the L-labeled (mirrored) points lie on the patient's left
+PASS the PRE landmarks themselves are unchanged (PRE LZf still at its own position)
+PASS the mirrored set is not a case
+PASS Occlusal made from the PRE landmarks RIn, LIn and the Oc ones (not the mirrored set)   [RIn, LIn, ROc6, LOc6, ROc3, LOc3, MidOc]
+PASS Occlusal = independent numpy fit, mapped to the world
+PASS Occlusal is perpendicular to Sagittal   [-2.43e-17]
+PASS Paracoronal normal along Sagittal x Occlusal, through Se
+PASS Tri plane through the PRE LZf, LD, LsOr
+PASS symmetrized model named Cube_symmetrized_R, not under a transform
+PASS keep-R cube volume = 80 x 60 x 60 = 288000 mm^3 (own divergence-theorem sum)   [287999.9954]
+PASS triangles consistently oriented outward (signed volume positive)   [288000.00]
+PASS closed surface: every edge shared by exactly 2 triangles   [open/nonmanifold edges 0]
+PASS every model point's mirror image is also a model point   [2.34e-06]
+PASS canonical bounds x -40..40, y 0..60, z -40..20   [[-4.00000008e+01 -1.86904902e-07 -4.00000010e+01] [40.0000009  60.00000091 20.00000332]]
+PASS source model unchanged
+PASS rows: PRE, mirPRE, POST, FU (no change rows)   [['PRE', 'mirPRE', 'POST', 'FU']]
+PASS CSV has the same rows   [['PRE', 'mirPRE', 'POST', 'FU']]
+PASS no mirror-target columns in the CSV   [[]]
+PASS added LZf-RZf distance in every set: PRE, mirPRE (= 2 x 45 mm, mirror pair), POST   [85.076 90.0 89.0]
+PASS its dx, dy, dz are the world vector LZf -> RZf (PRE)
+PASS R superior orbital ML = |x| of RsOr = 30 mm in PRE
+PASS R Zf vertical / L Zf vertical (to the PRE Occlusal) in PRE   [65.516 62.825]
+PASS orbital symmetry (Zf) = R - L
+PASS POST L Zf vertical uses the same (PRE) plane
+PASS FU R Zf vertical uses the same plane
+PASS PRE R canthal tilt (line RLC -> RMC to Occlusal, unsigned and signed) and R medial/lateral canthus AP (Paracoronal), mediolateral (Sagittal) and vertical (Occlusal) = independent values   [{}]
+PASS PRE L canthal tilt (line LLC -> LMC to Occlusal, unsigned and signed) and L medial/lateral canthus AP (Paracoronal), mediolateral (Sagittal) and vertical (Occlusal) = independent values   [{}]
+PASS signed canthal tilt is positive on both sides here, where each lateral canthus is above its medial one
+PASS the Occlusal plane records its superior side (the side CG is on)   [1]
+PASS with the Occlusal normal flipped the signed canthal tilt is unchanged (a plain line-to-plane angle changes sign)   [2.6411 2.6411]
+PASS mirPRE: the left canthal values equal the right ones (symmetric set)
+PASS R pitch (x rotation) = independent angle   [102.071 vs 102.071]
+PASS POST lacks LlOr: L lateral orbital AP blank in POST, filled in PRE and mirPRE
+PASS mirPRE row: every R value equals PRE's R value   [[('65.516', '65.516'), ('30.0', '30.0'), ('102.071', '102.071'), ('68.675', '68.675'), ('44.1', '44.1')]]
+PASS mirPRE row: L values equal its R values, orbital symmetry (Zf) = 0   [[('65.516', '65.516'), ('30.0', '30.0'), ('102.071', '102.071'), ('68.675', '68.675'), ('44.1', '44.1')]]
+PASS nothing about change rows was printed
+PASS the mirroring step was logged: 11 right landmarks copied and mirrored, the rest listed as not used   [['mirPRE_Landmarks: 11 right landmark(s) copied and mirrored across Sagittal to the left (RZf, RD, RsOr, RlOr, RiOr, RIn, ROc6, ROc3, RM, RMC, RLC); not used: CG, Se, Ba, ANS, LZf, LD, LsOr, LlOr, LiOr, LIn, LOc6, LOc3, N, MidOc, LM, LMC, LLC']]
+PASS second run (side='L', source='Cube') with no harness errors   [[]]
+PASS planes replaced, not duplicated   [['Tri', 'Occlusal', 'Sagittal', 'Paracoronal']]
+PASS re-run reuses InitialAlign and its wizard node (no InitialAlign_2)
+PASS mirrored set replaced (one mirPRE_Landmarks)
+PASS keep L: symmetrized set holds the PRE left landmarks and their mirrors labeled R   [['LZf', 'RZf', 'LD', 'RD', 'LsOr', 'RsOr', 'LlOr', 'RlOr', 'LiOr', 'RiOr', 'LIn', 'RIn', 'LOc6', 'ROc6', 'LOc3', 'ROc3', 'LM', 'RM', 'LMC', 'RMC', 'LLC', 'RLC']]
+PASS keep L: Occlusal still from the PRE landmarks   [RIn, LIn, ROc6, LOc6, ROc3, LOc3, MidOc]
+PASS keep L: Occlusal = independent fit
+PASS keep-L cube: Cube_symmetrized_L, volume 40 x 60 x 60 = 144000, closed   [143999.993]
+PASS keep L: rows PRE, mirPRE, POST, FU; mirPRE L values = PRE L values and R = L   [['PRE', 'mirPRE', 'POST', 'FU']]
+PASS segmentation source (labelmap -> closed surface): keep-R volume close to 59 x 30 x 30 = 53100 (surface smoothing allowed 6%)   [53028]
+PASS segmentation result symmetric about canonical x=0 (bounds)   [-29.821 29.821]
+PASS segmentation result closed   [0]
+PASS no R/L pairs: right = the plane normal with positive world x   [from the world +x direction (no R/L landmark pairs)]
+PASS with pairs: right normal points to canonical +x   [from 11 R/L landmark pair(s)]
+PASS cancelling the side question ends the run   [[]]
+PASS start(): reloads the edited settings.py (PRE_align now Se, CG) and runs   [[]]
+PASS start() again after restoring settings.py: back to the six alignment landmarks   [[]]
+PASS bad side and bad source names are errors
+PASS unknown pre case is an error
+PASS a known rigid transform is recovered exactly (From onto To), RMS ~0   [6.17e-07 rms 0.0000]
+PASS (why the _align lists hold world positions) the wizard ignores a parent transform of the To list   [6.17e-07]
+PASS different point counts: no transform, reported   [['No ShortAlign: ShortFrom has 2 and KnownTo has 6 point(s); a rigid registration with manual point matching needs the same number in both, at least 3.']]
+PASS a missing list: no transform, reported   [['No NoAlign: there is no point list named NoSuchList.']]
+PASS initial_align=False: no InitialAlign is made   [[]]
+PASS ASYM: reference planes made with no problems   [[]]
+PASS ASYM: Occlusal = numpy fit of the PRE occlusal landmarks
+PASS ASYM: Sagittal perpendicular to Occlusal   [6.94e-18]
+PASS ASYM: Sagittal normal = the independent minimisation over planes perpendicular to Occlusal   [1-|cos| = -2.22e-16]
+PASS ASYM: Sagittal passes through the centroid of CG, Se, Ba, ANS
+PASS ASYM: recorded RMS = the minimised RMS   [2.5910 vs 2.5910]
+PASS ASYM: the constraint matters here (the unconstrained fit differs by more than 0.5 deg)   [5.222 deg]
+PASS ASYM: Paracoronal perpendicular to Sagittal and Occlusal, through Se
+PASS no RIn: Occlusal and Paracoronal not made, Sagittal is the unconstrained fit and this is reported   [["Plane Occlusal not made: NOOCC has no landmark named 'RIn'", 'Plane Sagittal is an unconstrained best fit to CG, Se, Ba, ANS: the plane Occlusal it should be perpendicular to could not be made.', 'Plane Paracoronal not made: it needs the plane Occlusal, which could not be made.']]
+PASS no CG: the sagittal plane cannot be made -> error
+PASS guided definition from an empty scene ran to the side question with no harness errors   [ | steps left 0]
+PASS both lists end with the canthi LMC, LLC, RMC, RLC   [['CG', 'Se', 'Ba', 'ANS', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
+PASS PRE_Landmarks: CG, Se, Ba, ANS, then LIn, RIn, LOc1, ROc1 and the extra ROc2, LOc2, then LM, RM, the dacryons ... and the canthi, each labeled by its abbreviation   [['CG', 'Se', 'Ba', 'ANS', 'LIn', 'RIn', 'LOc1', 'ROc1', 'ROc2', 'LOc2', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
+PASS POST_Landmarks: the 20 common landmarks only, ending with the canthi (the extra click at the end removed)   [['CG', 'Se', 'Ba', 'ANS', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
+PASS descriptions hold the full names   [['Right Occluding surface of the molars, point 2', 'Right Lateral Orbitale', 'Left Lateral Canthus']]
+PASS every point is where it was clicked (the undone wrong click is gone)   [0.00e+00 done]
+PASS the first prompt and progress (24 points for PRE)   [[('Place landmarks: PRE_Landmarks', 'Please set the landmark for the: Crista Galli (CG)', 'Point 1 of 24')]]
+PASS after ANS comes LIn ('Point 5 of 24'); the extra occlusal point is asked for by name and counted ('Point 9 of 25')
+PASS the last PRE point is the right lateral canthus, 'Point 26 of 26'
+PASS POST prompts start again at CG, 'Point 1 of 20'
+PASS the head (skin) segment is hidden in 3D for the bony landmarks and shown for the canthi; the skull always shown   [[]]
+PASS afterwards the head segment is shown again in both segmentations
+PASS place mode was armed on the right list at every prompt   [[]]
+PASS place mode is off afterwards
+PASS while PRE_Landmarks is placed, the other point lists are hidden; while POST_Landmarks is placed, PRE_Landmarks is hidden too   [[{'Old_points': False, 'Hidden_points': False}] [{'Old_points': False, 'Hidden_points': False, 'PRE_Landmarks': False}]]
+PASS afterwards they are shown again (PRE_Landmarks, POST_Landmarks, Old_points); one the user had hidden stays hidden
+PASS PRE_align and POST_align: CG, Se, Ba, ANS, RM, LM in that order, copied from the new sets
+PASS after defining new landmarks, InitialAlign = independent rigid fit of the new POST_align onto PRE_align   [7.31e-07]
+PASS No to 'Replace it?' keeps both sets unchanged; the _align lists are remade (one each)   [[]]
+PASS Cancel in the placement panel stops the definition (returns False), place mode off, panel closed   [[]]
+PASS BRAINS (5% sampling, to verify the setup): FinalAlign recovers the known transform from a 2 deg / ~2 mm start   [start 2.00 deg 2.05 mm -> 0.014 deg 0.005 mm; []]
+PASS its refinement summary matches the change from InitialAlign
+PASS defaults passed to BRAINSFit: fixed PRE, moving POST, sampling 0.002, initialization InitialAlign, Rigid only, linear output FinalAlign, initialize mode Off   [['fixedVolume', 'initialTransform', 'initializeTransformMode', 'linearTransform', 'maskProcessingMode', 'movingVolume', 'samplingPercentage', 'useRigid']]
+INFO BRAINS at the default 0.002 sampling on this 100x90x80 phantom: start 2.00 deg 2.05 mm -> 0.021 deg 0.031 mm (few samples on a small volume; real CBCT has far more voxels)
+PASS FinalAlign reused on a re-run (no FinalAlign_2); POST put back under InitialAlign afterwards; FinalAlign not applied
+PASS POST under InitialAlign while registering gives the same result as without (not counted twice)   [4.44e-16]
+PASS fixed volume under a transform: no FinalAlign, reported   [['No FinalAlign: the fixed volume PRE is under the transform InitialAlign; it has to be free of transforms.']]
+PASS run(): InitialAlign from the landmarks (= the true transform here), then BRAINSFit started from it, making FinalAlign   [['BRAINSFit'] []]
+INFO pipeline FinalAlign at 0.002 starting from the exact InitialAlign: 0.039 deg 0.031 mm from the truth
+PASS FinalAlign applied before the calculations: POST volume, POST_Landmarks, POST_Segmentation and 'POST skull' under it   [[('POST', 'FinalAlign'), ('POST_Landmarks', 'FinalAlign'), ('POST_Segmentation', 'FinalAlign'), ('POST skull', 'FinalAlign')]]
+PASS not moved: PRE, PRE_Landmarks, POST_align (copied world positions), 'POSTER' (not a POST name); POST_other under another transform left there
+PASS the application is said in the terminal; POST_other under another transform is reported (and nothing is moved twice)   [['POST_other was not put under FinalAlign: it is under the transform Unrelated.']]
+PASS so the POST landmarks the measurements read now sit on the PRE ones (within 0.2 mm; ~40 mm apart before)   [max gap 0.053 mm]
+PASS final_align=False: BRAINSFit is not run
+PASS the run that made FinalAlign applied it
+PASS re-run with the POST volume under FinalAlign: no BRAINSFit, no wizard update, transforms and _align lists kept, said in the terminal   [captured [] logs ['Skipping InitialAlign and FinalAlign: POST already under FinalAlign, so the existing transforms and PRE_align / POST_align are kept. To register again, take the POST data off FinalAlign first.'] []]
+PASS ... and with the POST volume under FinalAlign, FinalAlign is applied to the other POST data   [[('POST', 'FinalAlign'), ('POST_Landmarks', 'FinalAlign'), ('POST_Segmentation', 'FinalAlign'), ('POST skull', 'FinalAlign')]]
+PASS re-run with POST_Landmarks under FinalAlign: no BRAINSFit, no wizard update, transforms and _align lists kept, said in the terminal   [captured [] logs ['Skipping InitialAlign and FinalAlign: POST_Landmarks already under FinalAlign, so the existing transforms and PRE_align / POST_align are kept. To register again, take the POST data off FinalAlign first.'] []]
+PASS ... and with POST_Landmarks under FinalAlign, FinalAlign is applied to the other POST data   [[('POST', 'FinalAlign'), ('POST_Landmarks', 'FinalAlign'), ('POST_Segmentation', 'FinalAlign'), ('POST skull', 'FinalAlign')]]
+PASS re-run with the POST volume under a transform that is under FinalAlign: no BRAINSFit, no wizard update, transforms and _align lists kept, said in the terminal   [captured [] logs ['Skipping InitialAlign and FinalAlign: POST already under FinalAlign, so the existing transforms and PRE_align / POST_align are kept. To register again, take the POST data off FinalAlign first.'] []]
+PASS ... and with the POST volume under a transform that is under FinalAlign, FinalAlign is applied to the other POST data   [[('POST', 'Tweak'), ('POST_Landmarks', 'FinalAlign'), ('POST_Segmentation', 'FinalAlign'), ('POST skull', 'FinalAlign')]]
+PASS POST taken off FinalAlign again: the next run registers again (BRAINSFit called, no skip message)
+PASS Slicer's drop detection finds the module in SlicerModule/ (and its file), not in the package folder itself
+INFO the SymmetrizedPlanning module is already installed in this Slicer (loaded at start-up), so the drop dialog cannot be shown here; that part was checked on a Slicer without it
+PASS module already installed: dropping it again offers nothing to load, settings unchanged
+PASS the module is under Craniofacial and finds the package next to it   [['Craniofacial'] 'C:\\Users\\lydia\\Documents\\Slicer\\CMFPlanning\\symmetrized' vs 'C:\\Users\\lydia\\Documents\\Slicer\\CMFPlanning\\symmetrized']
+PASS its Start button calls symmetrized.start() (segmentation on: the checkbox is ticked by default)   [[{'segment': True}]]
+PASS an error in the tool is shown in a message box, not lost in the console   [[]]
+PASS Start with the real tool opens its first question (cancelled here)   [[]]
+PASS segment=True: TotalSegmentator asked for PRE and POST with task craniofacial_structures, high order resampling on, normal quality, no pop-ups; its Python packages checked once   [[{'volume': 'PRE', 'task': 'craniofacial_structures', 'quality': 'normal', 'cpu': False, 'interactive': False, 'subset': None, 'higherOrderResampling': True}, {'volume': 'POST', 'task': 'craniofacial_structures', 'quality': 'normal', 'cpu': False, 'interactive': False, 'subset': None, 'higherOrderResampling': True}]]
+PASS one segmentation per volume (PRE_HeadSkull, POST_HeadSkull) with head, skull, mandible, lower and upper teeth; the two sinus segments removed   [{'PRE': [('mandible', 'Mandible'), ('teeth_lower', 'Lower teeth'), ('skull', 'Skull'), ('head', 'Head'), ('teeth_upper', 'Upper teeth')], 'POST': [('mandible', 'Mandible'), ('teeth_lower', 'Lower teeth'), ('skull', 'Skull'), ('head', 'Head'), ('teeth_upper', 'Upper teeth')]}]
+PASS each segmentation is in its volume's study in the Data module
+PASS POST_HeadSkull is under FinalAlign (with the other POST data), PRE_HeadSkull under no transform   [FinalAlign None]
+PASS a re-run reuses both segmentations (no new TotalSegmentator run, no second package check)
+PASS segment=False turns it off
+PASS a segmentation made with an older list of kept segments is made again (POST, up to date, is reused)   [['PRE', 'POST', 'PRE']]
+PASS a TotalSegmentator failure is reported and leaves no half-made segmentation   [['No X_HeadSkull: TotalSegmentator failed on X: simulated failure']]
+PASS missing segments are reported (the ones found are kept)   [['X_HeadSkull: TotalSegmentator found no head, teeth_lower, teeth_upper in X.']]
+PASS by default the segmentation runs, first: PRE and POST segmented before the landmark question (cancelled here)   [['PRE', 'POST']]
+PASS placing PRE: PRE_HeadSkull shown in 3D as a surface with the head hidden and the skull shown, POST_HeadSkull hidden; afterwards POST_HeadSkull and the head are shown again   [(1, 1, 0, False, True, True) (1, True)]
+PASS without the TotalSegmentator extension: reported, nothing made   [['No TotalSegmentator segmentation: the TotalSegmentator extension is not installed (Extensions Manager).']]
+PASS no volume to segment: a note in the terminal only, no warning
+PASS module: the TotalSegmentator checkbox is ticked by default and passes segment=True / False   [[{'segment': True}, {'segment': False}]]
+ALL PASSED
