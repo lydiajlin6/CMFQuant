@@ -5,10 +5,10 @@ import slicer
 from .settings import (
     ALIGN_ATTRIBUTE, ALIGN_LANDMARKS, ALIGN_SUFFIX, HIDDEN_WHILE_PLACING, LANDMARKS, OCCLUSAL_POINT, POST_CASE,
     POST_SET_NAME, PRE_CASE, PRE_ONLY_AFTER, PRE_ONLY_LANDMARKS, PRE_SET_NAME, SEGMENTATION_ATTRIBUTE,
-    SOFT_TISSUE_LANDMARKS,
+    SOFT_TISSUE_LANDMARKS, ASK_FOR_ADDITIONAL_LANDMARKS,
 )
 from .scene import _is_defined, _log, _remove_own, _unique_node_name, find_cases
-from .dialogs import _ask_buttons, _ask_yes_no
+from .dialogs import _ask_buttons, _ask_yes_no, ask_new_landmark
 
 
 class _PlacementPanel:
@@ -257,6 +257,7 @@ def define_landmarks(pre_name=PRE_SET_NAME, post_name=POST_SET_NAME):
     are done (or kept), False if cancelled. Makes the _align lists at the end."""
     import itertools
 
+    additional = []   # (abbreviation, full name, soft tissue) added during PRE: asked for in POST too
     for name, case_name in ((pre_name, PRE_CASE), (post_name, POST_CASE)):
         if name == post_name:
             slicer.util.infoDisplay(f"The preoperative landmarks are done.\n\nNext: the postoperative landmarks ({post_name}). "
@@ -270,7 +271,7 @@ def define_landmarks(pre_name=PRE_SET_NAME, post_name=POST_SET_NAME):
         restore_segmentation = show_segmentation_for_placing(case_name)
         restore_landmarks = hide_other_landmark_sets(node)
         plan = landmark_plan(name == pre_name)
-        total = sum(1 for item in plan if item is not MORE_OCCLUSAL)
+        total = sum(1 for item in plan if item is not MORE_OCCLUSAL) + (len(additional) if name == post_name else 0)
         done = 0
         soft = None
         kind = lambda item: "more" if item is MORE_OCCLUSAL else ("soft" if item[0] in SOFT_TISSUE_LANDMARKS else "bone")
@@ -300,12 +301,56 @@ def define_landmarks(pre_name=PRE_SET_NAME, post_name=POST_SET_NAME):
                 if not place_landmarks(node, items, first_number=done + 1, total=total):
                     return False
                 done += len(items)
+            # additional landmarks: those added in PRE (for POST), then any new ones
+            for abbreviation, full_name, is_soft in list(additional) if name == post_name else []:
+                if not _place_one(node, case_name, (abbreviation, full_name), is_soft, done + 1, total, soft):
+                    return False
+                done += 1
+            while ASK_FOR_ADDITIONAL_LANDMARKS and _ask_yes_no(
+                    f"{done} landmark(s) of {name} are placed.\n\nAdd an additional landmark to {name}?", "Additional landmarks"):
+                new = _ask_additional_landmark(node)
+                if new is None:
+                    break
+                total += 1
+                if not _place_one(node, case_name, new[:2], new[2], done + 1, total, soft):
+                    return False
+                done += 1
+                if name == pre_name:
+                    additional.append(new)
         finally:
             restore_landmarks()
             restore_segmentation()
     for problem in create_alignment_lists()[1]:
         _log(problem)
     return True
+
+
+def _ask_additional_landmark(node):
+    """The new-landmark dialog until a usable abbreviation is given: (abbreviation, full name, soft tissue) or None."""
+    taken = {node.GetNthControlPointLabel(i) for i in range(node.GetNumberOfControlPoints())}
+    while True:
+        answer = ask_new_landmark(node.GetName())
+        if answer is None:
+            return None
+        abbreviation, full_name, is_soft = answer
+        if not abbreviation or any(c.isspace() for c in abbreviation):
+            problem = "Give an abbreviation without spaces (it becomes the point's label)."
+        elif abbreviation in taken:
+            problem = f"{node.GetName()} already has a landmark called {abbreviation}; choose another abbreviation."
+        else:
+            return abbreviation, full_name or abbreviation, is_soft
+        slicer.util.warningDisplay(problem, windowTitle="Landmark name")
+
+
+def _place_one(node, case_name, landmark, is_soft, number, total, soft_shown):
+    """Place one additional landmark, with the head (skin) segment shown if it is a soft tissue landmark."""
+    if bool(is_soft) != bool(soft_shown):
+        set_soft_tissue_visible(case_name, bool(is_soft))
+    try:
+        return place_landmarks(node, [landmark], first_number=number, total=total)
+    finally:
+        if bool(is_soft) != bool(soft_shown):
+            set_soft_tissue_visible(case_name, bool(soft_shown))
 
 
 def create_alignment_lists(case_names=(PRE_CASE, POST_CASE)):

@@ -43,8 +43,8 @@ Application Settings > Modules, select its path under "Additional module paths" 
 1. In Slicer, load the preoperative scan and name the volume **`PRE`**, the postoperative scan named **`POST`**, and
    the preoperative model or segmentation of the skull. Name other postoperative data so it starts with `POST`
    (for example `POST_Segmentation`), so it is aligned with the rest.
-2. Open **Modules > Craniofacial > Symmetrized Planning** and click **Start**. (The segmentation checkbox is ticked by
-   default; untick it if you do not want the scans segmented first.)
+2. Open **Modules > Craniofacial > Symmetrized Planning**, choose how the scans are segmented first (**Automatic
+   (TotalSegmentator)** by default, **Make my own (threshold in the Segment Editor)**, or **None**) and click **Start**.
 3. Answer the questions. At the end a save dialog asks where to put the CSV.
 
 The module's **Open the instructions (README)** button opens this file.
@@ -63,11 +63,13 @@ example to `settings.py`) take effect without restarting Slicer.
 
 ## What happens, step by step
 
-### 0. Segmentation (first, on by default)
+### 0. Segmentation (first; automatic by default)
 
-Before anything else, each of the `PRE` and `POST` volumes is segmented, so that the landmarks can be placed on it. In
-the module the checkbox **Segment head (skin), skull, mandible and teeth of PRE and POST with TotalSegmentator first** is
-ticked by default; untick it (or call `start(segment=False)`) to skip this step. The TotalSegmentator extension's
+Before anything else, each of the `PRE` and `POST` volumes is segmented, so that the landmarks can be placed on it. The
+module's choice (or `start(segment=...)`) is **Automatic (TotalSegmentator)** (`"auto"`, the default), **Make my own
+(threshold in the Segment Editor)** (`"manual"`, below) or **None** (`False`).
+
+**Automatic.** The TotalSegmentator extension's
 **head: craniofacial structures** task (`craniofacial_structures`) is run with the advanced option **high order
 resampling** on. It produces mandible, lower teeth, skull, head, maxillary sinus, frontal sinus and upper teeth; the two
 **sinus segments are removed** and **head, skull, mandible, lower teeth and upper teeth** are kept
@@ -86,6 +88,25 @@ later put under `FinalAlign` with the other POST data.
 - If the extension is missing, it fails or a segment is missing, this is reported and the rest of the tool carries on.
   With no `PRE` or `POST` volume in the scene (landmarks only) the step is skipped with a note in the terminal.
 
+**Make my own.** For `PRE`, then `POST`, an empty segmentation `PRE_HeadSkull` / `POST_HeadSkull` with the segments
+**head** and **skull** is made and the **Segment Editor** opens with the **Threshold** effect on the head segment. A small
+window asks you to set the threshold for the head (skin surface): drag the threshold range until the highlighted area in
+the slice views covers the head, then click **Apply threshold and keep largest island**. The threshold is applied and
+then Islands **keep largest island**, which removes everything not connected to the largest piece. The same follows for
+the skull. The threshold starts at -300 for the head and 300 for the skull up to the volume's maximum
+(`MANUAL_THRESHOLDS`, Hounsfield units for CT; adjust for each scan, in particular for CBCT).
+
+- The segmentation is tagged, named, placed (the volume's study, its transform) and used exactly like the automatic one,
+  so the rest of the tool works the same: it is shown while landmarks are placed (head hidden for bony points),
+  `POST_HeadSkull` goes under `FinalAlign`, and it can be the source of the symmetrized model.
+- Segments may overlap: the head stays solid (it includes the bone) and the skull overlaps it. While you threshold,
+  the Segment Editor is set to overwrite nothing, edit everywhere and use no intensity mask; your own settings are put
+  back afterwards. The volume is taken off its transform while you threshold (so its own voxels are used) and put back.
+- An empty segment (threshold range too narrow) is not accepted: you are asked to widen the range.
+- **Cancel** stops the whole run, without leaving a half-made segmentation.
+- A segmentation you made by hand is reused on later runs and never replaced by the automatic one (delete it to redo
+  it); choosing **Make my own** replaces one made automatically.
+
 ### 1. Landmarks
 
 The first question: **Define new landmarks** or **Use landmarks already set**.
@@ -94,6 +115,14 @@ Defining walks you through every point with a small window that stays open besid
 "Please set the landmark for the: Crista Galli (CG)", "Point 1 of 24". Click the point on the scan (slice view) or the
 model (3D view); it is labeled with its abbreviation (and the full name as its description) and the window moves on.
 A wrongly labeled or renamed point is put right, and an extra click after the last point is removed.
+
+**Additional landmarks.** After each set's list you are asked **"Add an additional landmark?"**. Yes opens a small
+dialog for an abbreviation (it becomes the point's label; start it with R or L for a landmark that has a side, so it
+is mirrored and paired), a full name, and whether it is a soft tissue landmark (placed with the head segment shown);
+then you place it. You can add as many as you like. Additional landmarks added to `PRE_Landmarks` are asked for in
+`POST_Landmarks` too, right after its list, so both sets match. An abbreviation already in the set is refused.
+`ASK_FOR_ADDITIONAL_LANDMARKS = False` turns the question off; landmarks you always want can be added to `LANDMARKS` in
+`settings.py`. Additional landmarks are not in the preset measurements; add measurements for them when asked.
 
 - **Place point** turns placing back on (for example after pressing Esc), **Undo last point** removes the last one,
   **Cancel** stops.
@@ -247,7 +276,7 @@ POST's own transform, would start from the wrong place). To register again, take
 | `final_align` | `True` | make FinalAlign with General Registration (BRAINS) |
 | | | (both registration steps are skipped automatically when POST is already under FinalAlign, see above) |
 | `apply_final` | `True` | put the POST data under FinalAlign before anything is calculated |
-| `segment` | `True` | first of all, segment head/skull/mandible/teeth of PRE and POST with TotalSegmentator (the module's checkbox) |
+| `segment` | `"auto"` | first of all, segment PRE and POST: `"auto"` (TotalSegmentator), `"manual"` (threshold in the Segment Editor) or `False` (the module's choice) |
 | `pre` | `"PRE"` (else asked) | the preoperative landmark set's case name |
 | `side` | asked | `"R"` or `"L"`: the side to keep |
 | `source` | the only one, else asked | the model or segmentation to symmetrize |
@@ -268,6 +297,8 @@ Edit **`settings.py`**, then run `symmetrized.start()` again. The top part is me
 - `ALIGN_LANDMARKS`: the landmarks copied into the alignment lists, in order.
 - `INITIAL_TRANSFORM_NAME`, `FINAL_TRANSFORM_NAME`, `BRAINS_SAMPLING_PERCENTAGE`.
 - `HIDDEN_WHILE_PLACING` (`["head"]`): segments hidden in 3D while landmarks are placed.
+- `ASK_FOR_ADDITIONAL_LANDMARKS` (`True`): ask for additional landmarks after each set.
+- `MANUAL_SEGMENTS`, `MANUAL_THRESHOLDS`: the segments made by hand and the threshold range each starts at.
 - `TOTALSEG_TASK`, `TOTALSEG_KEEP_SEGMENTS` (`["head", "skull", "mandible", "teeth_lower", "teeth_upper"]`), `TOTALSEG_HIGHER_ORDER_RESAMPLING`, `SEGMENTATION_SUFFIX`.
 - `SAGITTAL_LANDMARKS`, `REFERENCE_PLANES`: how the planes are made.
 - `SUPERIOR_LANDMARK` (`"CG"`): the PRE landmark that tells which side of a reference plane is superior.
@@ -290,7 +321,7 @@ are a snapshot: after moving a PRE landmark or a plane, run again.
 | `workflow.py` | `run()`: the order of the steps and the plane/measurement pickers |
 | `placement.py` | the guided landmark placement window, `define_landmarks()`, the alignment lists |
 | `registration.py` | `fiducial_registration()` (InitialAlign), `intensity_registration()` (FinalAlign), `apply_final_align()` |
-| `segmentation.py` | the optional TotalSegmentator segmentation (`segment_volumes()`) |
+| `segmentation.py` | the segmentation: TotalSegmentator (`segment_volumes()`) or by hand in the Segment Editor (`segment_volumes_manually()`) |
 | `planes.py` | plane fitting, including the constrained sagittal fit, and the reference planes |
 | `mirroring.py` | which side is right, `mirPRE_Landmarks` |
 | `model.py` | the symmetrized model |
@@ -322,7 +353,10 @@ Slicer module loaded through Slicer's own drag-and-drop routine (with the dialog
 settings are not changed; if the module is already installed in that Slicer, this part is noted and skipped) and its
 Start button, and the TotalSegmentator segmentation with TotalSegmentator replaced by a stand-in (the settings it is
 given, removing the sinuses, placement, reuse, re-making an outdated one, failures, that it runs first and by
-default, and what is shown and hidden in 3D while landmarks are placed, including the other landmark sets).
+default, and what is shown and hidden in 3D while landmarks are placed, including the other landmark sets), the
+additional landmarks (a refused duplicate, a soft tissue one, carried over to POST), and making the segmentations by
+hand (the Segment Editor driven by a timer; each segment compared voxel by voxel with an independent threshold and
+largest-connected-component calculation, for PRE and a rotated POST under a transform; settings put back; cancelling).
 
 ## Not verified
 
@@ -333,6 +367,8 @@ default, and what is shown and hidden in 3D while landmarks are placed, includin
   clicks. The windows' look and feel has not been checked by a user.
 - The module installation was tested by calling the routine Slicer runs on a drop and by starting Slicer with the module
   folder as a module path, not by physically dragging the folder onto the window.
+- Making the segmentations by hand was tested with the threshold set by the test, not by a person dragging the slider on
+  a real scan; how the suggested starting thresholds suit real CT/CBCT has not been checked.
 - The TotalSegmentator segmentation was run for real on one CT only (MG_test_scan1, 1 to 2 minutes on the GPU; head,
   skull, mandible, lower and upper teeth found, sinuses removed); the automated test replaces TotalSegmentator with a
   stand-in. Its accuracy has not been assessed.

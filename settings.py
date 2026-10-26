@@ -31,6 +31,11 @@ PRE_ONLY_AFTER = "ANS"   # in PRE, PRE_ONLY_LANDMARKS (and the extra molar point
 # Soft tissue landmarks: while these are placed, the head (skin) segment is shown in 3D (it is hidden for the others).
 SOFT_TISSUE_LANDMARKS = ["LMC", "LLC", "RMC", "RLC"]
 
+# Additional landmarks: after each set's list you are asked whether to add more (an abbreviation and a full name of your
+# choice, then you place it); the ones added to PRE are then asked for in POST too. False skips the question. Landmarks
+# you always want can instead be added to LANDMARKS above.
+ASK_FOR_ADDITIONAL_LANDMARKS = True
+
 OCCLUSAL_POINT = {"L": "Left Occluding surface of the molars", "R": "Right Occluding surface of the molars"}
 
 # Lists for a manual fiducial registration: these landmarks, in this order, copied into "<case>_align".
@@ -52,6 +57,12 @@ SEGMENTATION_SUFFIX = "_HeadSkull"
 # While a landmark set is placed, its segmentation is shown in 3D without these segments, so that the bone underneath
 # can be clicked; they are shown for the SOFT_TISSUE_LANDMARKS and again afterwards.
 HIDDEN_WHILE_PLACING = ["head"]
+# Making the segmentations yourself instead (run(segment="manual"), or the module's choice "Make my own"): the Segment
+# Editor's Threshold effect, first for the head (skin), then for the skull, each followed by Islands "keep largest
+# island". The threshold range the Threshold effect starts at for each (in the volume's units, Hounsfield units for CT;
+# None = the volume's maximum); you adjust it for each scan.
+MANUAL_SEGMENTS = [("head", "head (skin surface)"), ("skull", "skull (bone)")]
+MANUAL_THRESHOLDS = {"head": (-300, None), "skull": (300, None)}
 
 # The sagittal plane (the mirror plane). Its landmarks are not mirrored.
 SAGITTAL_PLANE = "Sagittal"
@@ -130,6 +141,7 @@ REGISTRATION_NODE_NAME = "InitialAlign registration"   # the Fiducial Registrati
 POST_CASE = "POST"        # the case registered to PRE_CASE
 SEGMENTATION_ATTRIBUTE = "SymmetrizedHeadSkullOf"   # set on the _HeadSkull segmentations (holds the volume's name)
 KEPT_SEGMENTS_ATTRIBUTE = "SymmetrizedKeptSegments"   # the TOTALSEG_KEEP_SEGMENTS it was made with
+SEGMENTATION_METHOD_ATTRIBUTE = "SymmetrizedSegmentationMethod"   # "manual" for a segmentation made by threshold
 SUPERIOR_ATTRIBUTE = "SuperiorSide"   # set on reference planes: "+1" if the normal points superior, "-1" if inferior
 
 NO_LANDMARKS_MESSAGE = (

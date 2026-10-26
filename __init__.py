@@ -16,10 +16,12 @@ measurements use world positions, so the POST landmarks count as aligned with PR
     symmetrized.start()     # reloads every module (so edits to settings.py count), then runs
 
 What run() does, in order:
-S. Segmentation (on by default; segment=False turns it off): the PRE and POST volumes are segmented with the
+S. Segmentation (segment="auto" by default; "manual" or False): the PRE and POST volumes are segmented with the
    TotalSegmentator extension (head: craniofacial structures, high order resampling), keeping head, skull, mandible and
-   teeth in PRE_HeadSkull / POST_HeadSkull (segmentation.py). This comes first so the landmarks can be placed on it:
-   while a set is placed, its segmentation is shown in 3D with the head (skin) hidden.
+   teeth in PRE_HeadSkull / POST_HeadSkull; or you make head and skull yourself by thresholding in the Segment Editor
+   (largest island kept) (segmentation.py). This comes first so the landmarks can be placed on it: while a set is
+   placed, its segmentation is shown in 3D with the head (skin) hidden. After each landmark set you can add
+   additional landmarks of your own (asked for in POST too).
 0. Asks whether to define new landmarks or use landmarks already in the scene (landmarks=False skips the question,
    landmarks=True goes straight to defining). Defining new ones walks you through every point with a small panel
    ("Please set the landmark for the: Crista Galli (CG)"): first the preoperative set "PRE_Landmarks" (settings.LANDMARKS plus
@@ -90,7 +92,7 @@ from .measurements import (
     finalize_measurements,
 )
 from .placement import place_landmarks, define_landmarks, create_alignment_lists
-from .segmentation import segment_volumes, segment_head_and_skull
+from .segmentation import segment_volumes, segment_head_and_skull, segment_volumes_manually, segment_manually
 from .registration import (
     find_volume, fiducial_registration, intensity_registration, post_under_final_align, apply_final_align,
 )

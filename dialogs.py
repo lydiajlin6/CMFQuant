@@ -71,6 +71,39 @@ def _ask_text(title, prompt, default=""):
     return edit.text.strip()
 
 
+def ask_new_landmark(set_name):
+    """Dialog for an additional landmark: (abbreviation, full name, soft tissue?) or None if cancelled. The abbreviation
+    becomes the point's label; soft tissue landmarks are placed with the head (skin) segment shown."""
+    import qt
+
+    dialog = qt.QDialog(slicer.util.mainWindow())
+    dialog.setWindowTitle("New landmark")
+    dialog.setMinimumWidth(420)
+    layout = qt.QVBoxLayout(dialog)
+    label = qt.QLabel(f"Additional landmark for {set_name}. Start the abbreviation with R or L for a landmark that has a "
+                      "side (it is then mirrored and paired like the others).")
+    label.setWordWrap(True)
+    layout.addWidget(label)
+    form = qt.QFormLayout()
+    abbreviation = qt.QLineEdit()
+    abbreviation.setObjectName("abbreviationEdit")
+    abbreviation.placeholderText = "for example Pog or RTr"
+    full_name = qt.QLineEdit()
+    full_name.setObjectName("fullNameEdit")
+    full_name.placeholderText = "for example Pogonion or Right Tragus"
+    soft = qt.QCheckBox("Soft tissue landmark (placed on the skin)")
+    soft.setObjectName("softTissueCheckBox")
+    form.addRow("Abbreviation:", abbreviation)
+    form.addRow("Full name:", full_name)
+    layout.addLayout(form)
+    layout.addWidget(soft)
+    row, _ = _button_row(dialog)
+    layout.addLayout(row)
+    if not dialog.exec_():
+        return None
+    return abbreviation.text.strip(), full_name.text.strip(), bool(soft.checked)
+
+
 def _ask_buttons(title, text, buttons, informative=""):
     """The text of the button the user clicks in a question box (None for Cancel or closing it)."""
     import qt

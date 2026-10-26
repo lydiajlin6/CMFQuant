@@ -13,7 +13,7 @@ from .model import create_symmetrized_model, model_sources
 from .dialogs import _ask_buttons, _ask_text, _ask_yes_no, _choose_landmarks, _choose_option, ask_side
 from .measurements import evaluate, finalize_measurements, preset_measurements, spec_title
 from .placement import create_alignment_lists, define_landmarks
-from .segmentation import segment_volumes
+from .segmentation import segment_volumes, segment_volumes_manually
 from .registration import (
     apply_final_align, find_volume, fiducial_registration, intensity_registration, post_under_final_align,
 )
@@ -165,15 +165,22 @@ def run(csv_path=None, pre=None, side=None, source=None, sagittal=None, presets=
     already under FinalAlign; "registration" then holds {"skipped": [those node names]}.
     apply_final: put the POST data (POST volume, POST landmark set, every node named POST...) under FinalAlign before
     anything is calculated (see registration.apply_final_align). On by default.
-    segment: first of all (before the landmarks, which can then be placed on it) segment the head (skin surface), skull,
-    mandible and teeth of the PRE and POST volumes with TotalSegmentator, one segmentation per volume without the sinus
-    segments (see segmentation.segment_volumes). On by default; a segmentation made by an earlier run with the same kept
-    segments is reused; with no PRE or POST volume it is skipped with a note in the log.
+    segment: first of all (before the landmarks, which can then be placed on it) make one segmentation per volume (PRE,
+    POST): True or "auto" (the default) segments the head (skin surface), skull, mandible and teeth with TotalSegmentator
+    (see segmentation.segment_volumes); "manual" lets you make the head and skull yourself by thresholding in the
+    Segment Editor (see segmentation.segment_volumes_manually; cancelling it ends the run); False skips it. A segmentation
+    made earlier is reused (one made by hand is never replaced automatically); with no PRE or POST volume it is skipped.
     Returns {"planes", "measurements", "model", "mirrored", "side", "initial_align", "final_align", "registration"}
     (empty dict if cancelled).
     """
     align_problems = []
-    if segment:   # first, so the landmarks can be placed on it (and POST_HeadSkull later goes under FinalAlign)
+    segment = {True: "auto", "automatic": "auto", "none": False, None: False}.get(segment, segment)
+    if segment == "manual":   # first, so the landmarks can be placed on it (and POST_HeadSkull later goes under FinalAlign)
+        _, more, cancelled = segment_volumes_manually()
+        if cancelled:
+            return {}
+        align_problems += more
+    elif segment:
         align_problems += segment_volumes()[1]
     if landmarks == "ask":
         answer = _ask_buttons("Landmarks", "Would you like to begin defining landmarks, or are the landmarks already set?",

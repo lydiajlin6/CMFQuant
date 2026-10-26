@@ -19,6 +19,9 @@ from slicer.ScriptedLoadableModule import *  # noqa: F403 (ScriptedLoadableModul
 # symmetrized/SlicerModule/this file -> the folder that contains symmetrized/
 PACKAGE_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACKAGE_PARENT = os.path.dirname(PACKAGE_FOLDER)
+SEGMENTATION_CHOICES = [("Automatic (TotalSegmentator)", "auto"),
+                        ("Make my own (threshold in the Segment Editor)", "manual"),
+                        ("None", "none")]
 
 
 class SymmetrizedPlanning(ScriptedLoadableModule):  # noqa: F405
@@ -52,14 +55,16 @@ class SymmetrizedPlanningWidget(ScriptedLoadableModuleWidget):  # noqa: F405
         start.minimumHeight = 40
         start.connect("clicked(bool)", self.onStart)
 
-        self.segmentCheckBox = qt.QCheckBox("Segment head (skin), skull, mandible and teeth of PRE and POST with TotalSegmentator "
-                                            "first (used for placing the landmarks)")
-        self.segmentCheckBox.objectName = "segmentCheckBox"
-        self.segmentCheckBox.toolTip = ("On by default. Slow the first time (minutes per scan; reused afterwards). Needs the TotalSegmentator extension. Makes "
-                                        "PRE_HeadSkull and POST_HeadSkull, each with head, skull, mandible, lower and "
-                                        "upper teeth segments (the sinus segments are removed).")
-        self.segmentCheckBox.checked = True
-        self.layout.addWidget(self.segmentCheckBox)
+        self.layout.addWidget(qt.QLabel("Segmentation of PRE and POST, made first and used for placing the landmarks:"))
+        self.segmentationCombo = qt.QComboBox()
+        self.segmentationCombo.objectName = "segmentationCombo"
+        for text, value in SEGMENTATION_CHOICES:
+            self.segmentationCombo.addItem(text, value)
+        self.segmentationCombo.toolTip = (
+            "Automatic: TotalSegmentator (needs the extension; minutes per scan the first time, reused afterwards) makes "
+            "PRE_HeadSkull and POST_HeadSkull with head, skull, mandible and teeth. Make my own: the Segment Editor opens "
+            "and you set a threshold for the head, then the skull (largest island kept). None: no segmentation.")
+        self.layout.addWidget(self.segmentationCombo)
         self.layout.addWidget(start)
 
         readme = qt.QPushButton("Open the instructions (README)")
@@ -78,7 +83,7 @@ class SymmetrizedPlanningWidget(ScriptedLoadableModuleWidget):  # noqa: F405
             sys.path.insert(0, PACKAGE_PARENT)
         try:
             import symmetrized
-            symmetrized.start(segment=bool(self.segmentCheckBox.checked))
+            symmetrized.start(segment=self.segmentationCombo.currentData)
         except Exception as exc:  # show it instead of failing silently in the console
             slicer.util.errorDisplay(f"The symmetrized tool stopped with an error:\n\n{exc}", windowTitle="Symmetrized Planning",
                                      detailedText=traceback.format_exc())

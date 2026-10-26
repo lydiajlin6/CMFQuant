@@ -762,12 +762,29 @@ try:
     sim_timer.timeout.connect(sim_tick)
     sim_timer.start()
     errors.clear()
+    def new_landmark(abbreviation, full_name, soft):
+        def action(w):
+            seen.setdefault("new_landmark_sets", []).append(w.findChild(qt.QLabel).text.split(".")[0])
+            widget(w, "abbreviationEdit").setText(abbreviation)
+            widget(w, "fullNameEdit").setText(full_name)
+            widget(w, "softTissueCheckBox").checked = soft
+            widget(w, "okButton").click()
+        return action
+
     steps[:] = [
         ("Landmarks", side_button("Define new landmarks")),
         ("Occlusal points", side_button("Right")),
         ("Occlusal points", side_button("Left")),
         ("Occlusal points", side_button("Done")),
+        ("Additional landmarks", msg("Yes")),                           # after the PRE list
+        ("New landmark", new_landmark("CG", "taken already", False)),   # refused: PRE has CG
+        ("Landmark name", msg("Ok")),
+        ("New landmark", new_landmark("Pog", "Pogonion", False)),
+        ("Additional landmarks", msg("Yes")),
+        ("New landmark", new_landmark("LTr", "Left Tragus", True)),     # a soft tissue one
+        ("Additional landmarks", msg("No")),
         ("Postoperative landmarks", msg("Ok")),
+        ("Additional landmarks", msg("No")),                            # POST: Pog and LTr were asked for already
         ("Side to keep", side_button("Cancel")),
     ]
     started = time.time()
@@ -788,7 +805,8 @@ try:
           out3 == {} and not errors and not steps, "; ".join(e.splitlines()[-1] for e in errors) + f" | steps left {len(steps)}")
     BOTH = [a for a, _ in sym.settings.LANDMARKS]
     check("both lists end with the canthi LMC, LLC, RMC, RLC", BOTH[-4:] == ["LMC", "LLC", "RMC", "RLC"] and len(BOTH) == 20, str(BOTH))
-    pre_expected = BOTH[:4] + ["LIn", "RIn", "LOc1", "ROc1", "ROc2", "LOc2"] + BOTH[4:]
+    pre_expected = BOTH[:4] + ["LIn", "RIn", "LOc1", "ROc1", "ROc2", "LOc2"] + BOTH[4:] + ["Pog", "LTr"]
+    post_expected = BOTH + ["Pog", "LTr"]
     pre3 = slicer.mrmlScene.GetFirstNodeByName("PRE_Landmarks")
     post3 = slicer.mrmlScene.GetFirstNodeByName("POST_Landmarks")
     lab3 = [pre3.GetNthControlPointLabel(i) for i in range(pre3.GetNumberOfControlPoints())] if pre3 else None
@@ -796,14 +814,18 @@ try:
           "the canthi, each labeled by its abbreviation",
           lab3 == pre_expected, str(lab3))
     lab4 = [post3.GetNthControlPointLabel(i) for i in range(post3.GetNumberOfControlPoints())] if post3 else None
-    check("POST_Landmarks: the 20 common landmarks only, ending with the canthi (the extra click at the end removed)", lab4 == BOTH, str(lab4))
+    check("PRE_Landmarks ends with the two additional landmarks (Pog, then the soft tissue LTr); a duplicate name was refused",
+          lab3 is not None and lab3[-2:] == ["Pog", "LTr"] and lab3.count("CG") == 1, str(lab3[-3:] if lab3 else None))
+    check("POST_Landmarks: the 20 common landmarks, then the additional Pog and LTr from PRE (the extra click removed)",
+          lab4 == post_expected, str(lab4))
     names_full = dict(sym.settings.LANDMARKS + sym.settings.PRE_ONLY_LANDMARKS)
     names_full["ROc2"] = "Right Occluding surface of the molars, point 2"
     names_full["LOc2"] = "Left Occluding surface of the molars, point 2"
+    names_full["Pog"], names_full["LTr"] = "Pogonion", "Left Tragus"
     check("descriptions hold the full names", pre3 is not None and all(pre3.GetNthControlPointDescription(i) == names_full[a]
           for i, a in enumerate(pre_expected)), str([pre3.GetNthControlPointDescription(i) for i in (8, 20, 23)]) if pre3 else "")
     worst3 = 0.0
-    for node_, labs in ((pre3, pre_expected), (post3, BOTH)):
+    for node_, labs in ((pre3, pre_expected), (post3, post_expected)):
         for i, a in enumerate(labs):
             q_ = [0.0] * 3
             node_.GetNthControlPointPositionWorld(i, q_)
@@ -816,8 +838,13 @@ try:
           and ("Place landmarks: PRE_Landmarks", "Please set the landmark for the: Right Occluding surface of the molars, point 2 (ROc2)", "Point 9 of 25") in sim["prompts"])
     check("the last PRE point is the right lateral canthus, 'Point 26 of 26'",
           ("Place landmarks: PRE_Landmarks", "Please set the landmark for the: Right Lateral Canthus (RLC)", "Point 26 of 26") in sim["prompts"])
-    check("POST prompts start again at CG, 'Point 1 of 20'", ("Place landmarks: POST_Landmarks", "Please set the landmark for the: Crista Galli (CG)", "Point 1 of 20") in sim["prompts"])
-    soft_ = set(sym.settings.SOFT_TISSUE_LANDMARKS)
+    check("POST prompts start again at CG, 'Point 1 of 22' (20 + the 2 additional ones from PRE)",
+          ("Place landmarks: POST_Landmarks", "Please set the landmark for the: Crista Galli (CG)", "Point 1 of 22") in sim["prompts"])
+    check("the additional landmarks are asked for by their names, in PRE (points 27, 28) and in POST",
+          ("Place landmarks: PRE_Landmarks", "Please set the landmark for the: Pogonion (Pog)", "Point 27 of 27") in sim["prompts"]
+          and ("Place landmarks: PRE_Landmarks", "Please set the landmark for the: Left Tragus (LTr)", "Point 28 of 28") in sim["prompts"]
+          and ("Place landmarks: POST_Landmarks", "Please set the landmark for the: Left Tragus (LTr)", "Point 22 of 22") in sim["prompts"])
+    soft_ = set(sym.settings.SOFT_TISSUE_LANDMARKS) | {"LTr"}
     wrong_ = [(n_, a_, h_) for n_, a_, h_, k_ in sim["head"] if h_ != (a_ in soft_) or not k_]
     check("the head (skin) segment is hidden in 3D for the bony landmarks and shown for the canthi; the skull always shown",
           len(sim["head"]) >= 40 and not wrong_ and any(a_ in soft_ for _, a_, _, _ in sim["head"]), str(wrong_[:4]))
@@ -1125,7 +1152,7 @@ try:
     sym.start = lambda **k: calls.append(k)
     start_button.click()
     sym.start = real_start
-    check("its Start button calls symmetrized.start() (segmentation on: the checkbox is ticked by default)", calls == [{"segment": True}], str(calls))
+    check("its Start button calls symmetrized.start() (segmentation 'Automatic' by default)", calls == [{"segment": "auto"}], str(calls))
 
     def boom(**k):
         raise RuntimeError("test failure")
@@ -1255,17 +1282,119 @@ try:
     finally:
         sym.segmentation.totalsegmentator_logic = real_logic_fn
 
+    # ---------------- making the segmentations by hand: Threshold + Islands (keep largest) in the Segment Editor ----------------
+    from scipy import ndimage
+    for n in [n for n in slicer.util.getNodesByClass("vtkMRMLSegmentationNode") if n.GetName().endswith("_HeadSkull")]:
+        slicer.mrmlScene.RemoveNode(n)
+    chosen = {"head": 150.0, "skull": 600.0}           # the thresholds the 'user' drags the Threshold range to
+    msim = {"seen": [], "acted": None, "cancel": False}
+
+    def manual_tick():
+        """Plays the user in the Segment Editor: sets the Threshold range for the current segment, then clicks Apply."""
+        try:
+            w = [tw for tw in slicer.app.topLevelWidgets() if tw.objectName == "manualSegmentationPanel" and tw.visible]
+            if not w:
+                return
+            w = w[0]
+            prompt = widget(w, "promptLabel").text
+            if prompt == msim["acted"]:
+                return
+            msim["acted"] = prompt
+            editor_ = slicer.modules.segmenteditor.widgetRepresentation().self().editor
+            effect_ = editor_.activeEffect()
+            segment_id_ = editor_.currentSegmentID()
+            msim["seen"].append((prompt, slicer.util.selectedModule(), effect_.name if effect_ else None, segment_id_,
+                                 effect_.doubleParameter("MinimumThreshold") if effect_ else None))
+            if msim["cancel"]:
+                widget(w, "cancelButton").click()
+                return
+            effect_.setParameter("MinimumThreshold", str(chosen[segment_id_]))
+            effect_.setParameter("MaximumThreshold", str(float(arr.max())))
+            widget(w, "applyButton").click()
+        except Exception:
+            errors.append(traceback.format_exc())
+
+    slicer.util.selectModule("SegmentEditor")
+    _ed_node = slicer.modules.segmenteditor.widgetRepresentation().self().editor.mrmlSegmentEditorNode()
+    _ed_node.SetOverwriteMode(slicer.vtkMRMLSegmentEditorNode.OverwriteVisibleSegments)   # a user setting that must be put back
+    editor_settings_before = (_ed_node.GetOverwriteMode(), _ed_node.GetMaskMode(), _ed_node.GetSourceVolumeIntensityMask())
+    slicer.util.selectModule("SymmetrizedPlanning")
+    mtimer = qt.QTimer()
+    mtimer.setInterval(60)
+    mtimer.timeout.connect(manual_tick)
+    mtimer.start()
+    steps[:] = [("Side to keep", side_button("Cancel"))]
+    sym.run(csv_path=csv2, landmarks=False, segment="manual")
+    check("segment='manual': ran to the side question with no harness errors", not errors and not steps, "; ".join(e.splitlines()[-1] for e in errors))
+    lo_ = float(arr.min())
+    seen_ = [(p_, m_, e_, s_, round(t_, 3)) for p_, m_, e_, s_, t_ in msim["seen"]]
+    check("the Segment Editor is opened with Threshold on the head, then the skull, for PRE then POST, starting at the suggested thresholds",
+          [(p_, m_, e_, s_) for p_, m_, e_, s_, _ in seen_] == [
+              ("PRE: set the threshold for the head (skin surface).", "SegmentEditor", "Threshold", "head"),
+              ("PRE: set the threshold for the skull (bone).", "SegmentEditor", "Threshold", "skull"),
+              ("POST: set the threshold for the head (skin surface).", "SegmentEditor", "Threshold", "head"),
+              ("POST: set the threshold for the skull (bone).", "SegmentEditor", "Threshold", "skull")]
+          and [t_ for *_, t_ in seen_] == [max(-300.0, lo_), 300.0, max(-300.0, lo_), 300.0], str(seen_))
+    ok_masks, islands_ = True, []
+    expected_ = {}
+    for sid_, thr_ in chosen.items():
+        lab_, count_ = ndimage.label((arr >= thr_) & (arr <= arr.max()))          # face (6-) connectivity, as Islands
+        expected_[sid_] = (lab_ == (np.argmax(np.bincount(lab_.ravel())[1:]) + 1), count_)
+    for v_ in ("PRE", "POST"):
+        seg_m = slicer.mrmlScene.GetFirstNodeByName(f"{v_}_HeadSkull")
+        vol_m = slicer.mrmlScene.GetFirstNodeByName(v_)
+        for sid_, (want_, count_) in expected_.items():
+            got_ = slicer.util.arrayFromSegmentBinaryLabelmap(seg_m, sid_, vol_m).astype(bool) if seg_m else None
+            islands_.append((v_, sid_, count_, int(want_.sum()), int(got_.sum()) if got_ is not None else None))
+            ok_masks &= got_ is not None and got_.shape == want_.shape and bool(np.array_equal(got_, want_))
+    check("each segment = the voxels in its threshold range, largest 6-connected island only; the head stays solid (the skull "
+          "overlaps it) (independent scipy check; the same for the rotated POST under FinalAlign)",
+          ok_masks and all(c_ > 1 for _, _, c_, _, _ in islands_), str(islands_))
+    ed_node_ = slicer.modules.segmenteditor.widgetRepresentation().self().editor.mrmlSegmentEditorNode()
+    check("the Segment Editor's overwrite/mask settings are put back as they were",
+          (ed_node_.GetOverwriteMode(), ed_node_.GetMaskMode(), ed_node_.GetSourceVolumeIntensityMask()) == editor_settings_before,
+          str((ed_node_.GetOverwriteMode(), ed_node_.GetMaskMode(), ed_node_.GetSourceVolumeIntensityMask())))
+    segs_m = {v_: slicer.mrmlScene.GetFirstNodeByName(f"{v_}_HeadSkull") for v_ in ("PRE", "POST")}
+    check("named PRE_HeadSkull / POST_HeadSkull, segments head and skull, tagged as made by hand for that volume",
+          all(n_ is not None and list(n_.GetSegmentation().GetSegmentIDs()) == ["head", "skull"]
+              and n_.GetAttribute("SymmetrizedSegmentationMethod") == "manual" and n_.GetAttribute("SymmetrizedHeadSkullOf") == v_
+              for v_, n_ in segs_m.items()))
+    check("afterwards: back in the Symmetrized Planning module, no Segment Editor effect left active; POST_HeadSkull under the POST volume's transform",
+          slicer.util.selectedModule() == "SymmetrizedPlanning"
+          and slicer.modules.segmenteditor.widgetRepresentation().self().editor.activeEffect() is None
+          and parent_name(segs_m["POST"]) == parent_name(slicer.mrmlScene.GetFirstNodeByName("POST")))
+    restore_m = sym.placement.show_segmentation_for_placing("PRE")
+    head_hidden = not segs_m["PRE"].GetDisplayNode().GetSegmentVisibility3D("head")
+    restore_m()
+    check("the hand-made segmentation is used for placing landmarks like the automatic one (head hidden while placing)", head_hidden)
+    ids_m = {v_: n_.GetID() for v_, n_ in segs_m.items()}
+    steps[:] = [("Side to keep", side_button("Cancel"))]
+    sym.run(csv_path=csv2, landmarks=False)                       # default: automatic
+    check("a later automatic run keeps the hand-made segmentations (not replaced)",
+          all(slicer.mrmlScene.GetFirstNodeByName(f"{v_}_HeadSkull").GetID() == i_ for v_, i_ in ids_m.items())
+          and not errors and not steps)
+    for n_ in segs_m.values():
+        slicer.mrmlScene.RemoveNode(n_)
+    msim.update(cancel=True, acted=None)
+    out_c = sym.run(csv_path=csv2, landmarks=False, segment="manual")
+    check("Cancel while making them ends the run and leaves no half-made segmentation",
+          out_c == {} and slicer.mrmlScene.GetFirstNodeByName("PRE_HeadSkull") is None and not errors, str(errors))
+    mtimer.stop()
+
     calls = []
     real_start = sym.start
     sym.start = lambda **k: calls.append(k)
-    seg_box_default = slicer.util.findChild(widget_m, "segmentCheckBox").checked
-    slicer.util.findChild(widget_m, "segmentCheckBox").checked = True
-    start_button.click()
-    slicer.util.findChild(widget_m, "segmentCheckBox").checked = False
-    start_button.click()
+    combo_ = slicer.util.findChild(widget_m, "segmentationCombo")
+    choices_ = [combo_.itemText(i) for i in range(combo_.count)]
+    default_ = combo_.currentText
+    for i in range(combo_.count):
+        combo_.setCurrentIndex(i)
+        start_button.click()
+    combo_.setCurrentIndex(0)
     sym.start = real_start
-    check("module: the TotalSegmentator checkbox is ticked by default and passes segment=True / False",
-          seg_box_default is True and calls == [{"segment": True}, {"segment": False}], str(calls))
+    check("module: segmentation choice Automatic (default) / Make my own / None passes segment='auto' / 'manual' / 'none'",
+          default_ == "Automatic (TotalSegmentator)" and len(choices_) == 3
+          and calls == [{"segment": "auto"}, {"segment": "manual"}, {"segment": "none"}], f"{choices_} {calls}")
     TotalSegmentator.TotalSegmentatorLogic = _RealTotalSegLogic
 
 except Exception:

@@ -98,14 +98,16 @@ PASS no RIn: Occlusal and Paracoronal not made, Sagittal is the unconstrained fi
 PASS no CG: the sagittal plane cannot be made -> error
 PASS guided definition from an empty scene ran to the side question with no harness errors   [ | steps left 0]
 PASS both lists end with the canthi LMC, LLC, RMC, RLC   [['CG', 'Se', 'Ba', 'ANS', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
-PASS PRE_Landmarks: CG, Se, Ba, ANS, then LIn, RIn, LOc1, ROc1 and the extra ROc2, LOc2, then LM, RM, the dacryons ... and the canthi, each labeled by its abbreviation   [['CG', 'Se', 'Ba', 'ANS', 'LIn', 'RIn', 'LOc1', 'ROc1', 'ROc2', 'LOc2', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
-PASS POST_Landmarks: the 20 common landmarks only, ending with the canthi (the extra click at the end removed)   [['CG', 'Se', 'Ba', 'ANS', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC']]
+PASS PRE_Landmarks: CG, Se, Ba, ANS, then LIn, RIn, LOc1, ROc1 and the extra ROc2, LOc2, then LM, RM, the dacryons ... and the canthi, each labeled by its abbreviation   [['CG', 'Se', 'Ba', 'ANS', 'LIn', 'RIn', 'LOc1', 'ROc1', 'ROc2', 'LOc2', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC', 'Pog', 'LTr']]
+PASS PRE_Landmarks ends with the two additional landmarks (Pog, then the soft tissue LTr); a duplicate name was refused   [['RLC', 'Pog', 'LTr']]
+PASS POST_Landmarks: the 20 common landmarks, then the additional Pog and LTr from PRE (the extra click removed)   [['CG', 'Se', 'Ba', 'ANS', 'LM', 'RM', 'LD', 'LZf', 'LsOr', 'LlOr', 'LiOr', 'RD', 'RZf', 'RsOr', 'RlOr', 'RiOr', 'LMC', 'LLC', 'RMC', 'RLC', 'Pog', 'LTr']]
 PASS descriptions hold the full names   [['Right Occluding surface of the molars, point 2', 'Right Lateral Orbitale', 'Left Lateral Canthus']]
 PASS every point is where it was clicked (the undone wrong click is gone)   [0.00e+00 done]
 PASS the first prompt and progress (24 points for PRE)   [[('Place landmarks: PRE_Landmarks', 'Please set the landmark for the: Crista Galli (CG)', 'Point 1 of 24')]]
 PASS after ANS comes LIn ('Point 5 of 24'); the extra occlusal point is asked for by name and counted ('Point 9 of 25')
 PASS the last PRE point is the right lateral canthus, 'Point 26 of 26'
-PASS POST prompts start again at CG, 'Point 1 of 20'
+PASS POST prompts start again at CG, 'Point 1 of 22' (20 + the 2 additional ones from PRE)
+PASS the additional landmarks are asked for by their names, in PRE (points 27, 28) and in POST
 PASS the head (skin) segment is hidden in 3D for the bony landmarks and shown for the canthi; the skull always shown   [[]]
 PASS afterwards the head segment is shown again in both segmentations
 PASS place mode was armed on the right list at every prompt   [[]]
@@ -113,7 +115,7 @@ PASS place mode is off afterwards
 PASS while PRE_Landmarks is placed, the other point lists are hidden; while POST_Landmarks is placed, PRE_Landmarks is hidden too   [[{'Old_points': False, 'Hidden_points': False}] [{'Old_points': False, 'Hidden_points': False, 'PRE_Landmarks': False}]]
 PASS afterwards they are shown again (PRE_Landmarks, POST_Landmarks, Old_points); one the user had hidden stays hidden
 PASS PRE_align and POST_align: CG, Se, Ba, ANS, RM, LM in that order, copied from the new sets
-PASS after defining new landmarks, InitialAlign = independent rigid fit of the new POST_align onto PRE_align   [7.31e-07]
+PASS after defining new landmarks, InitialAlign = independent rigid fit of the new POST_align onto PRE_align   [9.95e-07]
 PASS No to 'Replace it?' keeps both sets unchanged; the _align lists are remade (one each)   [[]]
 PASS Cancel in the placement panel stops the definition (returns False), place mode off, panel closed   [[]]
 PASS BRAINS (5% sampling, to verify the setup): FinalAlign recovers the known transform from a 2 deg / ~2 mm start   [start 2.00 deg 2.05 mm -> 0.014 deg 0.005 mm; []]
@@ -121,7 +123,7 @@ PASS its refinement summary matches the change from InitialAlign
 PASS defaults passed to BRAINSFit: fixed PRE, moving POST, sampling 0.002, initialization InitialAlign, Rigid only, linear output FinalAlign, initialize mode Off   [['fixedVolume', 'initialTransform', 'initializeTransformMode', 'linearTransform', 'maskProcessingMode', 'movingVolume', 'samplingPercentage', 'useRigid']]
 INFO BRAINS at the default 0.002 sampling on this 100x90x80 phantom: start 2.00 deg 2.05 mm -> 0.021 deg 0.031 mm (few samples on a small volume; real CBCT has far more voxels)
 PASS FinalAlign reused on a re-run (no FinalAlign_2); POST put back under InitialAlign afterwards; FinalAlign not applied
-PASS POST under InitialAlign while registering gives the same result as without (not counted twice)   [4.44e-16]
+PASS POST under InitialAlign while registering gives the same result as without (not counted twice)   [8.88e-16]
 PASS fixed volume under a transform: no FinalAlign, reported   [['No FinalAlign: the fixed volume PRE is under the transform InitialAlign; it has to be free of transforms.']]
 PASS run(): InitialAlign from the landmarks (= the true transform here), then BRAINSFit started from it, making FinalAlign   [['BRAINSFit'] []]
 INFO pipeline FinalAlign at 0.002 starting from the exact InitialAlign: 0.039 deg 0.031 mm from the truth
@@ -142,7 +144,7 @@ PASS Slicer's drop detection finds the module in SlicerModule/ (and its file), n
 INFO the SymmetrizedPlanning module is already installed in this Slicer (loaded at start-up), so the drop dialog cannot be shown here; that part was checked on a Slicer without it
 PASS module already installed: dropping it again offers nothing to load, settings unchanged
 PASS the module is under Craniofacial and finds the package next to it   [['Craniofacial'] 'C:\\Users\\lydia\\Documents\\Slicer\\CMFPlanning\\symmetrized' vs 'C:\\Users\\lydia\\Documents\\Slicer\\CMFPlanning\\symmetrized']
-PASS its Start button calls symmetrized.start() (segmentation on: the checkbox is ticked by default)   [[{'segment': True}]]
+PASS its Start button calls symmetrized.start() (segmentation 'Automatic' by default)   [[{'segment': 'auto'}]]
 PASS an error in the tool is shown in a message box, not lost in the console   [[]]
 PASS Start with the real tool opens its first question (cancelled here)   [[]]
 PASS segment=True: TotalSegmentator asked for PRE and POST with task craniofacial_structures, high order resampling on, normal quality, no pop-ups; its Python packages checked once   [[{'volume': 'PRE', 'task': 'craniofacial_structures', 'quality': 'normal', 'cpu': False, 'interactive': False, 'subset': None, 'higherOrderResampling': True}, {'volume': 'POST', 'task': 'craniofacial_structures', 'quality': 'normal', 'cpu': False, 'interactive': False, 'subset': None, 'higherOrderResampling': True}]]
@@ -158,5 +160,14 @@ PASS by default the segmentation runs, first: PRE and POST segmented before the 
 PASS placing PRE: PRE_HeadSkull shown in 3D as a surface with the head hidden and the skull shown, POST_HeadSkull hidden; afterwards POST_HeadSkull and the head are shown again   [(1, 1, 0, False, True, True) (1, True)]
 PASS without the TotalSegmentator extension: reported, nothing made   [['No TotalSegmentator segmentation: the TotalSegmentator extension is not installed (Extensions Manager).']]
 PASS no volume to segment: a note in the terminal only, no warning
-PASS module: the TotalSegmentator checkbox is ticked by default and passes segment=True / False   [[{'segment': True}, {'segment': False}]]
+PASS segment='manual': ran to the side question with no harness errors
+PASS the Segment Editor is opened with Threshold on the head, then the skull, for PRE then POST, starting at the suggested thresholds   [[('PRE: set the threshold for the head (skin surface).', 'SegmentEditor', 'Threshold', 'head', 0.0), ('PRE: set the threshold for the skull (bone).', 'SegmentEditor', 'Threshold', 'skull', 300.0), ('POST: set the threshold for the head (skin surface).', 'SegmentEditor', 'Threshold', 'head', 0.0), ('POST: set the threshold for the skull (bone).', 'SegmentEditor', 'Threshold', 'skull', 300.0)]]
+PASS each segment = the voxels in its threshold range, largest 6-connected island only; the head stays solid (the skull overlaps it) (independent scipy check; the same for the rotated POST under FinalAlign)   [[('PRE', 'head', 9, 20681, 20681), ('PRE', 'skull', 7, 1252, 1252), ('POST', 'head', 9, 20681, 20681), ('POST', 'skull', 7, 1252, 1252)]]
+PASS the Segment Editor's overwrite/mask settings are put back as they were   [(1, 0, False)]
+PASS named PRE_HeadSkull / POST_HeadSkull, segments head and skull, tagged as made by hand for that volume
+PASS afterwards: back in the Symmetrized Planning module, no Segment Editor effect left active; POST_HeadSkull under the POST volume's transform
+PASS the hand-made segmentation is used for placing landmarks like the automatic one (head hidden while placing)
+PASS a later automatic run keeps the hand-made segmentations (not replaced)
+PASS Cancel while making them ends the run and leaves no half-made segmentation   [[]]
+PASS module: segmentation choice Automatic (default) / Make my own / None passes segment='auto' / 'manual' / 'none'   [['Automatic (TotalSegmentator)', 'Make my own (threshold in the Segment Editor)', 'None'] [{'segment': 'auto'}, {'segment': 'manual'}, {'segment': 'none'}]]
 ALL PASSED
